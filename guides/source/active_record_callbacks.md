@@ -354,7 +354,7 @@ The callback only runs when all the `:if` conditions and none of the `:unless` c
 Callback Classes
 ----------------
 
-Sometimes the callback methods that you'll write will be useful enough to be reused by other models. Active Record makes it possible to create classes that encapsulate the callback methods, so it becomes very easy to reuse them.
+Sometimes the callback methods that you'll write will be useful enough to be reused by other models. Active Record makes it possible to create classes that encapsulate the callback methods, so they can be reused.
 
 Here's an example where we create a class with an `after_destroy` callback for a `PictureFile` model:
 
@@ -473,10 +473,25 @@ end
 => User was saved to database
 ```
 
-To register callbacks for both create and update actions, use `after_commit` instead.
+There is also an alias for using the `after_commit` callback for both create and update together:
+
+* `after_save_commit`
 
 ```ruby
 class User < ApplicationRecord
-  after_commit :log_user_saved_to_db, on: [:create, :update]
+  after_save_commit :log_user_saved_to_db
+
+  private
+  def log_user_saved_to_db
+    puts 'User was saved to database'
+  end
 end
+
+# creating a User
+>> @user = User.create
+=> User was saved to database
+
+# updating @user
+>> @user.save
+=> User was saved to database
 ```

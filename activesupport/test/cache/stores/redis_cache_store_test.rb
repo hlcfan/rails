@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "abstract_unit"
+require_relative "../../abstract_unit"
 require "active_support/cache"
 require "active_support/cache/redis_cache_store"
 require_relative "../behaviors"
@@ -15,7 +15,7 @@ Redis::Connection.drivers.append(driver)
 # connection pool testing.
 class SlowRedis < Redis
   def get(key, options = {})
-    if key =~ /latency/
+    if /latency/.match?(key)
       sleep 3
     else
       super
@@ -140,6 +140,12 @@ module ActiveSupport::Cache::RedisCacheStoreTests
       end
     end
 
+    def test_fetch_multi_without_names
+      assert_not_called(@cache.redis, :mget) do
+        @cache.fetch_multi() { }
+      end
+    end
+
     def test_increment_expires_in
       assert_called_with @cache.redis, :incrby, [ "#{@namespace}:foo", 1 ] do
         assert_called_with @cache.redis, :expire, [ "#{@namespace}:foo", 60 ] do
@@ -185,7 +191,6 @@ module ActiveSupport::Cache::RedisCacheStoreTests
     include ConnectionPoolBehavior
 
     private
-
       def store
         [:redis_cache_store]
       end
@@ -228,14 +233,34 @@ module ActiveSupport::Cache::RedisCacheStoreTests
     end
   end
 
-  class FailureSafetyTest < StoreTest
+  class MaxClientsReachedRedisClient < Redis::Client
+    def ensure_connected
+      raise Redis::CommandError
+    end
+  end
+
+  class FailureSafetyFromUnavailableClientTest < StoreTest
     include FailureSafetyBehavior
 
     private
-
       def emulating_unavailability
         old_client = Redis.send(:remove_const, :Client)
         Redis.const_set(:Client, UnavailableRedisClient)
+
+        yield ActiveSupport::Cache::RedisCacheStore.new
+      ensure
+        Redis.send(:remove_const, :Client)
+        Redis.const_set(:Client, old_client)
+      end
+  end
+
+  class FailureSafetyFromMaxClientsReachedErrorTest < StoreTest
+    include FailureSafetyBehavior
+
+    private
+      def emulating_unavailability
+        old_client = Redis.send(:remove_const, :Client)
+        Redis.const_set(:Client, MaxClientsReachedRedisClient)
 
         yield ActiveSupport::Cache::RedisCacheStore.new
       ensure

@@ -19,6 +19,7 @@ ActiveRecord::Schema.define do
     t.references :firm, index: false
     t.string  :firm_name
     t.integer :credit_limit
+    t.integer "a" * max_identifier_length
   end
 
   create_table :admin_accounts, force: true do |t|
@@ -114,7 +115,7 @@ ActiveRecord::Schema.define do
     t.column :font_size, :integer, **default_zero
     t.column :difficulty, :integer, **default_zero
     t.column :cover, :string, default: "hard"
-    t.string :isbn
+    t.string :isbn, **case_sensitive_options
     t.datetime :published_on
     t.index [:author_id, :name], unique: true
     t.index :isbn, where: "published_on IS NOT NULL", unique: true
@@ -260,6 +261,7 @@ ActiveRecord::Schema.define do
     t.references :developer, index: false
     t.references :company, index: false
     t.string :metadata
+    t.integer :count
   end
 
   create_table :customers, force: true do |t|
@@ -523,6 +525,8 @@ ActiveRecord::Schema.define do
     t.integer :club_id, :member_id
     t.boolean :favourite, default: false
     t.integer :type
+    t.datetime :created_at
+    t.datetime :updated_at
   end
 
   create_table :member_types, force: true do |t|
@@ -557,6 +561,10 @@ ActiveRecord::Schema.define do
     t.integer  :rgt
     t.integer  :root_id
     t.string   :type
+  end
+
+  create_table :mice, force: true do |t|
+    t.string   :name
   end
 
   create_table :movies, force: true, id: false do |t|
@@ -738,6 +746,7 @@ ActiveRecord::Schema.define do
     t.string :estimate_of_type
     t.integer :estimate_of_id
     t.integer :price
+    t.string :currency
   end
 
   create_table :products, force: true do |t|
@@ -791,6 +800,24 @@ ActiveRecord::Schema.define do
     t.integer :lock_version, default: 0
   end
 
+  disable_referential_integrity do
+    create_table :seminars, force: :cascade do |t|
+      t.string :name
+    end
+
+    create_table :sessions, force: :cascade do |t|
+      t.date :start_date
+      t.date :end_date
+      t.string :name
+    end
+
+    create_table :sections, force: :cascade do |t|
+      t.string :short_name
+      t.belongs_to :session, foreign_key: true
+      t.belongs_to :seminar, foreign_key: true
+    end
+  end
+
   create_table :shape_expressions, force: true do |t|
     t.string  :paint_type
     t.integer :paint_id
@@ -819,6 +846,10 @@ ActiveRecord::Schema.define do
     else
       t.datetime :updated_at
     end
+  end
+
+  create_table :squeaks, force: true do |t|
+    t.integer :mouse_id
   end
 
   create_table :prisoners, force: true do |t|
@@ -1040,6 +1071,7 @@ ActiveRecord::Schema.define do
   create_table :cake_designers, force: true do |t|
   end
   create_table :drink_designers, force: true do |t|
+    t.string :name
   end
   create_table :chefs, force: true do |t|
     t.integer :employable_id
@@ -1047,6 +1079,7 @@ ActiveRecord::Schema.define do
     t.integer :department_id
     t.string :employable_list_type
     t.integer :employable_list_id
+    t.timestamps
   end
   create_table :recipes, force: true do |t|
     t.integer :chef_id
@@ -1084,6 +1117,7 @@ ActiveRecord::Schema.define do
 
   create_table :non_primary_keys, force: true, id: false do |t|
     t.integer :id
+    t.datetime :created_at
   end
 end
 

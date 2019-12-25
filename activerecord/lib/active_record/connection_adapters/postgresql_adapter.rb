@@ -12,6 +12,7 @@ class ::PG::Connection # :nodoc:
   end
 end
 
+require "active_support/core_ext/object/try"
 require "active_record/connection_adapters/abstract_adapter"
 require "active_record/connection_adapters/statement_pool"
 require "active_record/connection_adapters/postgresql/column"
@@ -46,7 +47,7 @@ module ActiveRecord
       conn = PG.connect(conn_params)
       ConnectionAdapters::PostgreSQLAdapter.new(conn, logger, conn_params, config)
     rescue ::PG::Error => error
-      if error.message.include?("does not exist")
+      if error.message.include?(conn_params[:dbname])
         raise ActiveRecord::NoDatabaseError
       else
         raise
@@ -201,7 +202,7 @@ module ActiveRecord
       end
 
       def supports_insert_on_conflict?
-        postgresql_version >= 90500
+        database_version >= 90500
       end
       alias supports_insert_on_duplicate_skip? supports_insert_on_conflict?
       alias supports_insert_on_duplicate_update? supports_insert_on_conflict?
@@ -247,8 +248,6 @@ module ActiveRecord
 
         # @local_tz is initialized as nil to avoid warnings when connect tries to use it
         @local_tz = nil
-        @default_timezone = nil
-        @timestamp_decoder = nil
         @max_identifier_length = nil
 
         configure_connection
@@ -261,8 +260,10 @@ module ActiveRecord
         @use_insert_returning = @config.key?(:insert_returning) ? self.class.type_cast_config_to_boolean(@config[:insert_returning]) : true
       end
 
-      def truncate(table_name, name = nil)
-        exec_query "TRUNCATE TABLE #{quote_table_name(table_name)}", name, []
+      def self.database_exists?(config)
+        !!ActiveRecord::Base.postgresql_connection(config)
+      rescue ActiveRecord::NoDatabaseError
+        false
       end
 
       # Is this connection alive and ready for queries?
@@ -281,6 +282,8 @@ module ActiveRecord
           super
           @connection.reset
           configure_connection
+        rescue PG::ConnectionBad
+          connect
         end
       end
 
@@ -306,6 +309,7 @@ module ActiveRecord
       end
 
       def discard! # :nodoc:
+        super
         @connection.socket_io.reopen(IO::NULL) rescue nil
         @connection = nil
       end
@@ -348,7 +352,18 @@ module ActiveRecord
       end
 
       def supports_pgcrypto_uuid?
-        postgresql_version >= 90400
+        database_version >= 90400
+      end
+
+      def supports_optimizer_hints?
+        unless defined?(@has_pg_hint_plan)
+          @has_pg_hint_plan = extension_available?("pg_hint_plan")
+        end
+        @has_pg_hint_plan
+      end
+
+      def supports_common_table_expressions?
+        true
       end
 
       def supports_lazy_transactions?
@@ -381,9 +396,12 @@ module ActiveRecord
         }
       end
 
+      def extension_available?(name)
+        query_value("SELECT true FROM pg_available_extensions WHERE name = #{quote(name)}", "SCHEMA")
+      end
+
       def extension_enabled?(name)
-        res = exec_query("SELECT EXISTS(SELECT * FROM pg_available_extensions WHERE name = '#{name}' AND installed_version IS NOT NULL) as enabled", "SCHEMA")
-        res.cast_values.first
+        query_value("SELECT installed_version IS NOT NULL FROM pg_available_extensions WHERE name = #{quote(name)}", "SCHEMA")
       end
 
       def extensions
@@ -394,8 +412,6 @@ module ActiveRecord
       def max_identifier_length
         @max_identifier_length ||= query_value("SHOW max_identifier_length", "SCHEMA").to_i
       end
-      alias table_alias_length max_identifier_length
-      alias index_name_length max_identifier_length
 
       # Set the authorized user for this session
       def session_auth=(user)
@@ -418,9 +434,10 @@ module ActiveRecord
       }
 
       # Returns the version of the connected PostgreSQL server.
-      def postgresql_version
+      def get_database_version # :nodoc:
         @connection.server_version
       end
+      alias :postgresql_version :database_version
 
       def default_index_type?(index) # :nodoc:
         index.using == :btree || super
@@ -440,13 +457,13 @@ module ActiveRecord
         sql
       end
 
-      private
-        def check_version
-          if postgresql_version < 90300
-            raise "Your version of PostgreSQL (#{postgresql_version}) is too old. Active Record supports PostgreSQL >= 9.3."
-          end
+      def check_version # :nodoc:
+        if database_version < 90300
+          raise "Your version of PostgreSQL (#{database_version}) is too old. Active Record supports PostgreSQL >= 9.3."
         end
+      end
 
+      private
         # See https://www.postgresql.org/docs/current/static/errcodes-appendix.html
         VALUE_LIMIT_VIOLATION = "22001"
         NUMERIC_VALUE_OUT_OF_RANGE = "22003"
@@ -455,6 +472,7 @@ module ActiveRecord
         UNIQUE_VIOLATION      = "23505"
         SERIALIZATION_FAILURE = "40001"
         DEADLOCK_DETECTED     = "40P01"
+        DUPLICATE_DATABASE    = "42P04"
         LOCK_NOT_AVAILABLE    = "55P03"
         QUERY_CANCELED        = "57014"
 
@@ -476,6 +494,8 @@ module ActiveRecord
             SerializationFailure.new(message, sql: sql, binds: binds)
           when DEADLOCK_DETECTED
             Deadlocked.new(message, sql: sql, binds: binds)
+          when DUPLICATE_DATABASE
+            DatabaseAlreadyExists.new(message, sql: sql, binds: binds)
           when LOCK_NOT_AVAILABLE
             LockWaitTimeout.new(message, sql: sql, binds: binds)
           when QUERY_CANCELED
@@ -637,8 +657,11 @@ module ActiveRecord
           else
             result = exec_cache(sql, name, binds)
           end
-          ret = yield result
-          result.clear
+          begin
+            ret = yield result
+          ensure
+            result.clear
+          end
           ret
         end
 
@@ -694,11 +717,10 @@ module ActiveRecord
         #
         # Check here for more details:
         # https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/backend/utils/cache/plancache.c#l573
-        CACHED_PLAN_HEURISTIC = "cached plan must not change result type"
         def is_cached_plan_failure?(e)
           pgerror = e.cause
-          code = pgerror.result.result_error_field(PG::PG_DIAG_SQLSTATE)
-          code == FEATURE_NOT_SUPPORTED && pgerror.message.include?(CACHED_PLAN_HEURISTIC)
+          pgerror.result.result_error_field(PG::PG_DIAG_SQLSTATE) == FEATURE_NOT_SUPPORTED &&
+            pgerror.result.result_error_field(PG::PG_DIAG_SOURCE_FUNCTION) == "RevalidateCachedQuery"
         rescue
           false
         end
@@ -738,6 +760,8 @@ module ActiveRecord
         def connect
           @connection = PG.connect(@connection_parameters)
           configure_connection
+          add_pg_encoders
+          add_pg_decoders
         end
 
         # Configures the encoding, verbosity, schema search path, and time zone of the connection.
@@ -865,6 +889,9 @@ module ActiveRecord
         end
 
         def add_pg_decoders
+          @default_timezone = nil
+          @timestamp_decoder = nil
+
           coders_by_name = {
             "int2" => PG::TextDecoder::Integer,
             "int4" => PG::TextDecoder::Integer,

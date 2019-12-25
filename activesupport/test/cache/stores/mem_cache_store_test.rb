@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "abstract_unit"
+require_relative "../../abstract_unit"
 require "active_support/cache"
 require_relative "../behaviors"
 require "dalli"
@@ -9,7 +9,7 @@ require "dalli"
 # connection pool testing.
 class SlowDalliClient < Dalli::Client
   def get(key, options = {})
-    if key =~ /latency/
+    if /latency/.match?(key)
       sleep 3
     else
       super
@@ -113,7 +113,6 @@ class MemCacheStoreTest < ActiveSupport::TestCase
   end
 
   private
-
     def store
       [:mem_cache_store, ENV["MEMCACHE_SERVERS"] || "localhost:11211"]
     end

@@ -59,11 +59,10 @@ module ActionView
     end
 
     class RenderedTemplate # :nodoc:
-      attr_reader :body, :layout, :template
+      attr_reader :body, :template
 
-      def initialize(body, layout, template)
+      def initialize(body, template)
         @body = body
-        @layout = layout
         @template = template
       end
 
@@ -75,7 +74,6 @@ module ActionView
     end
 
     private
-
       def extract_details(options) # :doc:
         @lookup_context.registered_details.each_with_object({}) do |key, details|
           value = options[key]
@@ -97,8 +95,8 @@ module ActionView
         @lookup_context.formats = formats | @lookup_context.formats
       end
 
-      def build_rendered_template(content, template, layout = nil)
-        RenderedTemplate.new content, layout, template
+      def build_rendered_template(content, template)
+        RenderedTemplate.new content, template
       end
 
       def build_rendered_collection(templates, spacer)

@@ -3,7 +3,6 @@
 require "active_support/core_ext/module/attr_internal"
 require "active_support/core_ext/module/attribute_accessors"
 require "active_support/ordered_options"
-require "active_support/deprecation"
 require "action_view/log_subscriber"
 require "action_view/helpers"
 require "action_view/context"
@@ -242,7 +241,7 @@ module ActionView #:nodoc:
       @_config = ActiveSupport::InheritableOptions.new
 
       unless formats == NULL
-        ActiveSupport::Deprecation.warn <<~eowarn
+        ActiveSupport::Deprecation.warn <<~eowarn.squish
         Passing formats to ActionView::Base.new is deprecated
         eowarn
       end
@@ -251,7 +250,7 @@ module ActionView #:nodoc:
       when ActionView::LookupContext
         @lookup_context = lookup_context
       else
-        ActiveSupport::Deprecation.warn <<~eowarn
+        ActiveSupport::Deprecation.warn <<~eowarn.squish
         ActionView::Base instances should be constructed with a lookup context,
         assignments, and a controller.
         eowarn
@@ -267,7 +266,7 @@ module ActionView #:nodoc:
       _prepare_context
     end
 
-    def run(method, template, locals, buffer, &block)
+    def _run(method, template, locals, buffer, &block)
       _old_output_buffer, _old_virtual_path, _old_template = @output_buffer, @virtual_path, @current_template
       @current_template = template
       @output_buffer = buffer
@@ -278,10 +277,10 @@ module ActionView #:nodoc:
 
     def compiled_method_container
       if self.class == ActionView::Base
-        ActiveSupport::Deprecation.warn <<~eowarn
+        ActiveSupport::Deprecation.warn <<~eowarn.squish
           ActionView::Base instances must implement `compiled_method_container`
           or use the class method `with_empty_template_cache` for constructing
-          an ActionView::Base instances that has an empty cache.
+          an ActionView::Base instance that has an empty cache.
         eowarn
       end
 

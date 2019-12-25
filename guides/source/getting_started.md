@@ -28,7 +28,7 @@ curve diving straight into Rails. There are several curated lists of online reso
 for learning Ruby:
 
 * [Official Ruby Programming Language website](https://www.ruby-lang.org/en/documentation/)
-* [List of Free Programming Books](https://github.com/vhf/free-programming-books/blob/master/free-programming-books.md#ruby)
+* [List of Free Programming Books](https://github.com/EbookFoundation/free-programming-books/blob/master/free-programming-books.md#ruby)
 
 Be aware that some resources, while still excellent, cover versions of Ruby as old as
 1.6, and commonly 1.8, and will not include some syntax that you will see in day-to-day
@@ -55,7 +55,7 @@ The Rails philosophy includes two major guiding principles:
 
 * **Don't Repeat Yourself:** DRY is a principle of software development which
   states that "Every piece of knowledge must have a single, unambiguous, authoritative
-  representation within a system." By not writing the same information over and over
+  representation within a system". By not writing the same information over and over
   again, our code is more maintainable, more extensible, and less buggy.
 * **Convention Over Configuration:** Rails has opinions about the best way to do many
   things in a web application, and defaults to this set of conventions, rather than
@@ -126,7 +126,7 @@ run the following:
 $ rails --version
 ```
 
-If it says something like "Rails 5.2.1", you are ready to continue.
+If it says something like "Rails 6.0.0", you are ready to continue.
 
 ### Creating the Blog Application
 
@@ -205,12 +205,10 @@ $ rails server
 TIP: If you are using Windows, you have to pass the scripts under the `bin`
 folder directly to the Ruby interpreter e.g. `ruby bin\rails server`.
 
-TIP: Compiling CoffeeScript and JavaScript asset compression requires you
+TIP: JavaScript asset compression requires you
 have a JavaScript runtime available on your system, in the absence
-of a runtime you will see an `execjs` error during asset compilation.
+of a runtime you will see an `execjs` error during asset compression.
 Usually macOS and Windows come with a JavaScript runtime installed.
-Rails adds the `mini_racer` gem to the generated `Gemfile` in a
-commented line for new apps and you can uncomment if you need it.
 `therubyrhino` is the recommended runtime for JRuby users and is added by
 default to the `Gemfile` in apps generated under JRuby. You can investigate
 all the supported runtimes at [ExecJS](https://github.com/rails/execjs#readme).
@@ -219,7 +217,7 @@ This will fire up Puma, a web server distributed with Rails by default. To see
 your application in action, open a browser window and navigate to
 <http://localhost:3000>. You should see the Rails default information page:
 
-![Welcome aboard screenshot](images/getting_started/rails_welcome.png)
+![Yay! You're on Rails! screenshot](images/getting_started/rails_welcome.png)
 
 TIP: To stop the web server, hit Ctrl+C in the terminal window where it's
 running. To verify the server has stopped you should see your command prompt
@@ -228,9 +226,9 @@ dollar sign `$`. In development mode, Rails does not generally require you to
 restart the server; changes you make in files will be automatically picked up by
 the server.
 
-The "Welcome aboard" page is the _smoke test_ for a new Rails application: it
-makes sure that you have your software configured correctly enough to serve a
-page.
+The "Yay! You're on Rails!" page is the _smoke test_ for a new Rails
+application: it makes sure that you have your software configured correctly
+enough to serve a page.
 
 ### Say "Hello", Rails
 
@@ -293,7 +291,7 @@ of code:
 Now that we have made the controller and view, we need to tell Rails when we
 want "Hello, Rails!" to show up. In our case, we want it to show up when we
 navigate to the root URL of our site, <http://localhost:3000>. At the moment,
-"Welcome aboard" is occupying that spot.
+"Yay! You're on Rails!" is occupying that spot.
 
 Next, you have to tell Rails where your actual home page is located.
 
@@ -391,7 +389,7 @@ create and read. The form for doing this will look like this:
 It will look a little basic for now, but that's ok. We'll look at improving the
 styling for it afterwards.
 
-### Laying down the groundwork
+### Laying down the Groundwork
 
 Firstly, you need a place within the application to create a new article. A
 great place for that would be at `/articles/new`. With the route already
@@ -426,7 +424,7 @@ within our system.
 
 NOTE: There are `public`, `private` and `protected` methods in Ruby,
 but only `public` methods can be actions for controllers.
-For more details check out [Programming Ruby](http://www.ruby-doc.org/docs/ProgrammingRuby/).
+For more details check out [Programming Ruby](https://ruby-doc.org/docs/ProgrammingRuby/).
 
 If you refresh <http://localhost:3000/articles/new> now, you'll get a new error:
 
@@ -593,7 +591,7 @@ NOTE: By default `form_with` submits forms using Ajax thereby skipping full page
 redirects. To make this guide easier to get into we've disabled that with
 `local: true` for now.
 
-### Creating articles
+### Creating Articles
 
 To make the "Unknown action" go away, you can define a `create` action within
 the `ArticlesController` class in `app/controllers/articles_controller.rb`,
@@ -645,7 +643,7 @@ This action is now displaying the parameters for the article that are coming in
 from the form. However, this isn't really all that helpful. Yes, you can see the
 parameters but nothing in particular is being done with them.
 
-### Creating the Article model
+### Creating the Article Model
 
 Models in Rails use a singular name, and their corresponding database tables
 use a plural name. Rails provides a generator for creating models, which most
@@ -727,7 +725,7 @@ command will apply to the database defined in the `development` section of your
 environment, for instance in production, you must explicitly pass it when
 invoking the command: `rails db:migrate RAILS_ENV=production`.
 
-### Saving data in the controller
+### Saving Data in the Controller
 
 Back in `ArticlesController`, we need to change the `create` action
 to use the new `Article` model to save the data in the database.
@@ -872,7 +870,7 @@ Visit <http://localhost:3000/articles/new> and give it a try!
 
 ![Show action for articles](images/getting_started/show_action_for_articles.png)
 
-### Listing all articles
+### Listing all Articles
 
 We still need a way to list all our articles, so let's do that.
 The route for this as per output of `rails routes` is:
@@ -906,7 +904,7 @@ And then finally, add the view for this action, located at
 `app/views/articles/index.html.erb`:
 
 ```html+erb
-<h1>Listing articles</h1>
+<h1>Listing Articles</h1>
 
 <table>
   <tr>
@@ -928,7 +926,7 @@ And then finally, add the view for this action, located at
 Now if you go to <http://localhost:3000/articles> you will see a list of all the
 articles that you have created.
 
-### Adding links
+### Adding Links
 
 You can now create, show, and list articles. Now let's add some links to
 navigate through pages.
@@ -1131,8 +1129,9 @@ you attempt to do just that on the new article form
 We've covered the "CR" part of CRUD. Now let's focus on the "U" part, updating
 articles.
 
-The first step we'll take is adding an `edit` action to the `ArticlesController`,
-generally between the `new` and `create` actions, as shown:
+The first step we'll take is adding an `edit` action to the 
+`ArticlesController`, generally between the `new` and `create` 
+actions, as shown:
 
 ```ruby
 def new
@@ -1154,14 +1153,18 @@ def create
 end
 ```
 
+NOTE:  We're using `edit` to render a view. For the actual
+saving of the changes to the Article, we'll add an `update` action later.
+
+
 The view will contain a form similar to the one we used when creating
 new articles. Create a file called `app/views/articles/edit.html.erb` and make
 it look as follows:
 
 ```html+erb
-<h1>Edit article</h1>
+<h1>Edit Article</h1>
 
-<%= form_with(model: @article, local: true) do |form| %>
+<%= form_with model: @article, local: true do |form| %>
 
   <% if @article.errors.any? %>
     <div id="error_explanation">
@@ -1216,6 +1219,10 @@ Next, we need to create the `update` action in
 Add it between the `create` action and the `private` method:
 
 ```ruby
+def edit
+  @article = Article.find(params[:id])
+end
+
 def create
   @article = Article.new(article_params)
 
@@ -1351,7 +1358,7 @@ Now, let's update the `app/views/articles/new.html.erb` view to use this new
 partial, rewriting it completely:
 
 ```html+erb
-<h1>New article</h1>
+<h1>New Article</h1>
 
 <%= render 'form' %>
 
@@ -1361,7 +1368,7 @@ partial, rewriting it completely:
 Then do the same for the `app/views/articles/edit.html.erb` view:
 
 ```html+erb
-<h1>Edit article</h1>
+<h1>Edit Article</h1>
 
 <%= render 'form' %>
 
@@ -1560,7 +1567,7 @@ class CreateComments < ActiveRecord::Migration[6.0]
     create_table :comments do |t|
       t.string :commenter
       t.text :body
-      t.references :article, foreign_key: true
+      t.references :article, null: false, foreign_key: true
 
       t.timestamps
     end
@@ -1683,7 +1690,7 @@ So first, we'll wire up the Article show template
 </p>
 
 <h2>Add a comment:</h2>
-<%= form_with(model: [ @article, @article.comments.build ], local: true) do |form| %>
+<%= form_with model: [ @article, @article.comments.build ], local: true do |form| %>
   <p>
     <%= form.label :commenter %><br>
     <%= form.text_field :commenter %>
@@ -1764,7 +1771,7 @@ add that to the `app/views/articles/show.html.erb`.
 <% end %>
 
 <h2>Add a comment:</h2>
-<%= form_with(model: [ @article, @article.comments.build ], local: true) do |form| %>
+<%= form_with model: [ @article, @article.comments.build ], local: true do |form| %>
   <p>
     <%= form.label :commenter %><br>
     <%= form.text_field :commenter %>
@@ -1830,7 +1837,7 @@ following:
 <%= render @article.comments %>
 
 <h2>Add a comment:</h2>
-<%= form_with(model: [ @article, @article.comments.build ], local: true) do |form| %>
+<%= form_with model: [ @article, @article.comments.build ], local: true do |form| %>
   <p>
     <%= form.label :commenter %><br>
     <%= form.text_field :commenter %>
@@ -1860,7 +1867,7 @@ Let us also move that new comment section out to its own partial. Again, you
 create a file `app/views/comments/_form.html.erb` containing:
 
 ```html+erb
-<%= form_with(model: [ @article, @article.comments.build ], local: true) do |form| %>
+<%= form_with model: [ @article, @article.comments.build ], local: true do |form| %>
   <p>
     <%= form.label :commenter %><br>
     <%= form.text_field :commenter %>
@@ -2060,7 +2067,6 @@ getting up and running with Rails, feel free to consult these support
 resources:
 
 * The [Ruby on Rails Guides](index.html)
-* The [Ruby on Rails Tutorial](https://www.railstutorial.org/book)
 * The [Ruby on Rails mailing list](https://groups.google.com/group/rubyonrails-talk)
 * The [#rubyonrails](irc://irc.freenode.net/#rubyonrails) channel on irc.freenode.net
 

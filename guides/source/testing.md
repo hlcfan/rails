@@ -224,7 +224,7 @@ we ensured that our test passes. This approach to software development is
 referred to as
 [_Test-Driven Development_ (TDD)](http://c2.com/cgi/wiki?TestDrivenDevelopment).
 
-#### What an error looks like
+#### What an Error Looks Like
 
 To see how an error gets reported, here's a test containing an error:
 
@@ -470,7 +470,7 @@ Parallel testing allows you to parallelize your test suite. While forking proces
 default method, threading is supported as well. Running tests in parallel reduces the time it
 takes your entire test suite to run.
 
-### Parallel testing with processes
+### Parallel Testing with Processes
 
 The default parallelization method is to fork processes using Ruby's DRb system. The processes
 are forked based on the number of workers provided. The default number is the actual core count
@@ -522,7 +522,7 @@ end
 
 These methods are not needed or available when using parallel testing with threads.
 
-### Parallel testing with threads
+### Parallel Testing with Threads
 
 If you prefer using threads or are using JRuby, a threaded parallelization option is provided. The threaded
 parallelizer is backed by Minitest's `Parallel::Executor`.
@@ -574,7 +574,7 @@ For good tests, you'll need to give some thought to setting up test data.
 In Rails, you can handle this by defining and customizing fixtures.
 You can find comprehensive documentation in the [Fixtures API documentation](https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html).
 
-#### What Are Fixtures?
+#### What are Fixtures?
 
 _Fixtures_ is a fancy word for sample data. Fixtures allow you to populate your testing database with predefined data before your tests run. Fixtures are database independent and written in YAML. There is one file per model.
 
@@ -781,13 +781,13 @@ This can be helpful for viewing the browser at the point a test failed, or
 to view screenshots later for debugging.
 
 Two methods are provided: `take_screenshot` and `take_failed_screenshot`.
-`take_failed_screenshot` is automatically included in `after_teardown` inside
+`take_failed_screenshot` is automatically included in `before_teardown` inside
 Rails.
 
 The `take_screenshot` helper method can be included anywhere in your tests to
 take a screenshot of the browser.
 
-### Implementing a system test
+### Implementing a System Test
 
 Now we're going to add a system test to our blog application. We'll demonstrate
 writing a system test by visiting the index page and creating a new blog article.
@@ -832,7 +832,7 @@ rails test:system
 NOTE: By default, running `rails test` won't run your system tests.
 Make sure to run `rails test:system` to actually run them.
 
-#### Creating articles system test
+#### Creating Articles System Test
 
 Now let's test the flow for creating a new article in our blog.
 
@@ -1012,7 +1012,7 @@ Finally we can assert that our response was successful and our new article is re
 
 #### Taking it further
 
-We were able to successfully test a very small workflow for visiting our blog and creating a new article. If we wanted to take this further we could add tests for commenting, removing articles, or editing comments. Integration tests are a great place to experiment with all kinds of use-cases for our applications.
+We were able to successfully test a very small workflow for visiting our blog and creating a new article. If we wanted to take this further we could add tests for commenting, removing articles, or editing comments. Integration tests are a great place to experiment with all kinds of use cases for our applications.
 
 
 Functional Tests for Your Controllers
@@ -1112,7 +1112,7 @@ end
 
 Now you can try running all the tests and they should pass.
 
-NOTE: If you followed the steps in the Basic Authentication section, you'll need to add authorization to every request header to get all the tests passing:
+NOTE: If you followed the steps in the [Basic Authentication](getting_started.html#basic-authentication) section, you'll need to add authorization to every request header to get all the tests passing:
 
 ```ruby
 post articles_url, params: { article: { body: 'Rails is awesome!', title: 'Hello Rails' } }, headers: { Authorization: ActionController::HttpAuthentication::Basic.encode_credentials('dhh', 'secret') }
@@ -1144,7 +1144,7 @@ test "ajax request" do
   get article_url(article), xhr: true
 
   assert_equal 'hello world', @response.body
-  assert_equal "text/javascript", @response.content_type
+  assert_equal "text/javascript", @response.media_type
 end
 ```
 
@@ -1212,7 +1212,7 @@ Let's start by adding this assertion to our `test_should_create_article` test:
 ```ruby
 test "should create article" do
   assert_difference('Article.count') do
-    post article_url, params: { article: { title: 'Some title' } }
+    post articles_url, params: { article: { title: 'Some title' } }
   end
 
   assert_redirected_to article_path(Article.last)
@@ -1404,7 +1404,7 @@ If you find your helpers are cluttering `test_helper.rb`, you can extract them i
 ```ruby
 # lib/test/multiple_assertions.rb
 module MultipleAssertions
-  def assert_multiple_of_fourty_two(number)
+  def assert_multiple_of_forty_two(number)
     assert (number % 42 == 0), 'expected #{number} to be a multiple of 42'
   end
 end
@@ -1419,8 +1419,8 @@ require 'test/multiple_assertions'
 class NumberTest < ActiveSupport::TestCase
   include MultipleAssertions
 
-  test '420 is a multiple of fourty two' do
-    assert_multiple_of_fourty_two 420
+  test '420 is a multiple of forty two' do
+    assert_multiple_of_forty_two 420
   end
 end
 ```
@@ -1710,7 +1710,7 @@ your jobs are performed inline. It will also ensure that all previously performe
 and enqueued jobs are cleared before any test run so you can safely assume that
 no jobs have already been executed in the scope of each test.
 
-### Custom Assertions And Testing Jobs Inside Other Components
+### Custom Assertions and Testing Jobs inside Other Components
 
 Active Job ships with a bunch of custom assertions that can be used to lessen the verbosity of tests. For a full list of available assertions, see the API documentation for [`ActiveJob::TestHelper`](https://api.rubyonrails.org/classes/ActiveJob/TestHelper.html).
 
@@ -1722,10 +1722,31 @@ within a model:
 ```ruby
 require 'test_helper'
 
-class ProductTest < ActiveJob::TestCase
+class ProductTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   test 'billing job scheduling' do
     assert_enqueued_with(job: BillingJob) do
       product.charge(account)
+    end
+  end
+end
+```
+
+### Asserting Time Arguments in Jobs
+
+When serializing job arguments, `Time`, `DateTime`, and `ActiveSupport::TimeWithZone` lose microsecond precision. This means comparing deserialized time with actual time doesn't always work. To compensate for the loss of precision, `assert_enqueued_with` and `assert_performed_with` will remove microseconds from time objects in argument assertions.
+
+```ruby
+require 'test_helper'
+
+class ProductTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
+  test 'that product is reserved at a given time' do
+    now = Time.now
+    assert_performed_with(job: ReservationJob, args: [product, now]) do
+      product.reserve(now)
     end
   end
 end
@@ -1837,7 +1858,7 @@ class ProductTest < ActionCable::TestCase
 end
 ```
 
-If you want to test the broadcasting made with `Channel.broadcast_to`, you shoud use
+If you want to test the broadcasting made with `Channel.broadcast_to`, you should use
 `Channel.broadcasting_for` to generate an underlying stream name:
 
 ```ruby

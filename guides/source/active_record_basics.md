@@ -105,7 +105,7 @@ depending on the purpose of these columns.
   fields that Active Record will look for when you create associations between
   your models.
 * **Primary keys** - By default, Active Record will use an integer column named
-  `id` as the table's primary key (`bigint` for Postgres and MYSQL, `integer`
+  `id` as the table's primary key (`bigint` for PostgreSQL and MySQL, `integer`
   for SQLite). When using [Active Record Migrations](active_record_migrations.html)
   to create your tables, this column will be automatically created.
 
@@ -133,8 +133,7 @@ NOTE: While these column names are optional, they are in fact reserved by Active
 Creating Active Record Models
 -----------------------------
 
-It is very easy to create Active Record models. All you have to do is to
-subclass the `ApplicationRecord` class and you're good to go:
+To create Active Record models, subclass the `ApplicationRecord` class and you're good to go:
 
 ```ruby
 class Product < ApplicationRecord
